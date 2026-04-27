@@ -8,6 +8,7 @@ import typer
 
 from readeck_cli.client.http import ReadeckAPIError, ReadeckClient
 from readeck_cli.config import load_config
+from readeck_cli.models.label import Label
 from readeck_cli.output import (
     OutputFormat,
     print_error,
@@ -42,51 +43,59 @@ def list_labels(
 ) -> None:
     """List all labels."""
     client, service = _make_service(url, token)
+
+    async def _run() -> list[Label]:
+        try:
+            return await service.list()
+        finally:
+            await client.aclose()
+
     try:
-        labels = asyncio.run(service.list())
+        labels = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
 
     if output == OutputFormat.JSON:
-        render_json(
-            [{"id": lbl.id, "label": lbl.label, "count": lbl.count} for lbl in labels]
-        )
+        render_json([{"name": lbl.name, "count": lbl.count} for lbl in labels])
     else:
         render_table(
-            headers=["ID", "Label", "Count"],
-            rows=[[lbl.id, lbl.label, str(lbl.count or 0)] for lbl in labels],
+            headers=["Name", "Count"],
+            rows=[[lbl.name, str(lbl.count or 0)] for lbl in labels],
             title=f"Labels ({len(labels)})",
         )
 
 
 @app.command("get")
 def get_label(
-    label_id: Annotated[str, typer.Argument(help="Label ID")],
+    name: Annotated[str, typer.Argument(help="Label name")],
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
     output: Annotated[
         OutputFormat, typer.Option("--output", "-o")
     ] = OutputFormat.TABLE,
 ) -> None:
-    """Get a label by ID."""
+    """Get a label by name."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Label:
+        try:
+            return await service.get(name)
+        finally:
+            await client.aclose()
+
     try:
-        label = asyncio.run(service.get(label_id))
+        label = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
 
     if output == OutputFormat.JSON:
-        render_json({"id": label.id, "label": label.label, "count": label.count})
+        render_json({"name": label.name, "count": label.count})
     else:
         render_table(
-            headers=["ID", "Label", "Count"],
-            rows=[[label.id, label.label, str(label.count or 0)]],
+            headers=["Name", "Count"],
+            rows=[[label.name, str(label.count or 0)]],
         )
 
 
@@ -98,38 +107,48 @@ def create_label(
 ) -> None:
     """Create a new label."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Label:
+        try:
+            return await service.create(name)
+        finally:
+            await client.aclose()
+
     try:
-        label = asyncio.run(service.create(name))
-        print_success(f"Label '{label.label}' created (id: {label.id})")
+        label = asyncio.run(_run())
+        print_success(f"Label '{label.name}' created")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
 
 
 @app.command("update")
 def update_label(
-    label_id: Annotated[str, typer.Argument(help="Label ID")],
-    name: Annotated[str, typer.Option("--name", help="New name")],
+    name: Annotated[str, typer.Argument(help="Label name")],
+    new_name: Annotated[str, typer.Option("--name", help="New name")],
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
 ) -> None:
     """Rename a label."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Label:
+        try:
+            return await service.update(name, new_name=new_name)
+        finally:
+            await client.aclose()
+
     try:
-        label = asyncio.run(service.update(label_id, name=name))
-        print_success(f"Label updated to '{label.label}'")
+        label = asyncio.run(_run())
+        print_success(f"Label updated to '{label.name}'")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
 
 
 @app.command("delete")
 def delete_label(
-    label_id: Annotated[str, typer.Argument(help="Label ID")],
+    name: Annotated[str, typer.Argument(help="Label name")],
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
     confirm: Annotated[
@@ -138,13 +157,18 @@ def delete_label(
 ) -> None:
     """Delete a label."""
     if not confirm:
-        typer.confirm(f"Delete label {label_id}?", abort=True)
+        typer.confirm(f"Delete label '{name}'?", abort=True)
     client, service = _make_service(url, token)
+
+    async def _run() -> None:
+        try:
+            await service.delete(name)
+        finally:
+            await client.aclose()
+
     try:
-        asyncio.run(service.delete(label_id))
-        print_success(f"Label {label_id} deleted.")
+        asyncio.run(_run())
+        print_success(f"Label '{name}' deleted.")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())

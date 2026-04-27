@@ -37,14 +37,19 @@ class ReadeckClient:
         return response
 
     async def patch(
-        self, path: str, json: dict[str, Any] | None = None
+        self,
+        path: str,
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> httpx.Response:
-        response = await self._client.patch(path, json=json)
+        response = await self._client.patch(path, json=json, params=params)
         self._raise_for_status(response)
         return response
 
-    async def delete(self, path: str) -> httpx.Response:
-        response = await self._client.delete(path)
+    async def delete(
+        self, path: str, params: dict[str, Any] | None = None
+    ) -> httpx.Response:
+        response = await self._client.delete(path, params=params)
         self._raise_for_status(response)
         return response
 
