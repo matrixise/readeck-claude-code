@@ -1,4 +1,3 @@
-# src/readeck_cli/commands/bookmarks.py
 from __future__ import annotations
 
 import asyncio
@@ -9,7 +8,7 @@ import typer
 
 from readeck_cli.client.http import ReadeckAPIError, ReadeckClient
 from readeck_cli.config import load_config
-from readeck_cli.models.bookmark import Bookmark
+from readeck_cli.models.bookmark import Bookmark, BookmarkUpdated
 from readeck_cli.output import (
     OutputFormat,
     print_error,
@@ -58,15 +57,18 @@ def list_bookmarks(
 ) -> None:
     """List bookmarks."""
     client, service = _make_service(url, token)
+
+    async def _run() -> tuple[list[Bookmark], int]:
+        try:
+            return await service.list(page=page, limit=limit, fetch_all=all_pages)
+        finally:
+            await client.aclose()
+
     try:
-        bookmarks, total = asyncio.run(
-            service.list(page=page, limit=limit, fetch_all=all_pages)
-        )
+        bookmarks, total = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
     if output == OutputFormat.JSON:
         render_json([bm.model_dump(mode="json") for bm in bookmarks])
@@ -89,13 +91,18 @@ def get_bookmark(
 ) -> None:
     """Get a bookmark by ID."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Bookmark:
+        try:
+            return await service.get(bookmark_id)
+        finally:
+            await client.aclose()
+
     try:
-        bm = asyncio.run(service.get(bookmark_id))
+        bm = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
     if output == OutputFormat.JSON:
         render_json(bm.model_dump(mode="json"))
@@ -122,14 +129,19 @@ def add_bookmark(
 ) -> None:
     """Add a new bookmark."""
     client, service = _make_service(url, token)
+
+    async def _run() -> str:
+        try:
+            return await service.create(bookmark_url)
+        finally:
+            await client.aclose()
+
     try:
-        bm = asyncio.run(service.create(bookmark_url))
-        print_success(f"Bookmark created: {bm.id} — {bm.title}")
+        bookmark_id = asyncio.run(_run())
+        print_success(f"Bookmark submitted (id: {bookmark_id})")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
 
 @app.command("update")
@@ -161,14 +173,19 @@ def update_bookmark(
         raise typer.Exit(1) from None
 
     client, service = _make_service(url, token)
+
+    async def _run() -> BookmarkUpdated:
+        try:
+            return await service.update(bookmark_id, **updates)
+        finally:
+            await client.aclose()
+
     try:
-        bm = asyncio.run(service.update(bookmark_id, **updates))
+        bm = asyncio.run(_run())
         print_success(f"Bookmark {bm.id} updated.")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
 
 @app.command("delete")
@@ -182,14 +199,19 @@ def delete_bookmark(
     if not confirm:
         typer.confirm(f"Delete bookmark {bookmark_id}?", abort=True)
     client, service = _make_service(url, token)
+
+    async def _run() -> None:
+        try:
+            await service.delete(bookmark_id)
+        finally:
+            await client.aclose()
+
     try:
-        asyncio.run(service.delete(bookmark_id))
+        asyncio.run(_run())
         print_success(f"Bookmark {bookmark_id} deleted.")
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
 
 @app.command("search")
@@ -203,20 +225,25 @@ def search_bookmarks(
 ) -> None:
     """Full-text search bookmarks."""
     client, service = _make_service(url, token)
+
+    async def _run() -> list[Bookmark]:
+        try:
+            return await service.search(query)
+        finally:
+            await client.aclose()
+
     try:
-        bookmarks = asyncio.run(service.search(query))
+        bookmarks = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
     if output == OutputFormat.JSON:
-        render_json([bm.model_dump(mode="json") for bm in bookmarks])  # type: ignore[attr-defined]
+        render_json([bm.model_dump(mode="json") for bm in bookmarks])
     else:
         render_table(
             headers=["ID", "Title", "URL", "Archived", "Read (min)", "Labels"],
-            rows=[_bookmark_row(bm) for bm in bookmarks],  # type: ignore[attr-defined]
+            rows=[_bookmark_row(bm) for bm in bookmarks],
             title=f"Search results for '{query}' ({len(bookmarks)})",
         )
 
@@ -233,13 +260,18 @@ def export_bookmark(
 ) -> None:
     """Export a bookmark as epub or pdf."""
     client, service = _make_service(url, token)
+
+    async def _run() -> bytes:
+        try:
+            return await service.export(bookmark_id, fmt=fmt)
+        finally:
+            await client.aclose()
+
     try:
-        content = asyncio.run(service.export(bookmark_id, fmt=fmt))
+        content = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
-    finally:
-        asyncio.run(client.aclose())
 
     out_path = dest or Path(f"{bookmark_id}.{fmt}")
     out_path.write_bytes(content)
