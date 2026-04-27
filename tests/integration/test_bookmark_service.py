@@ -105,8 +105,67 @@ async def test_search_bookmarks(service: BookmarkService) -> None:
             200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
-    results = await service.search("example")
+    results = await service.search(search="example")
     assert len(results) == 1
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_search_bookmarks_by_title(service: BookmarkService) -> None:
+    route = respx.get(f"{BASE_URL}/api/bookmarks").mock(
+        return_value=httpx.Response(200, json=[BOOKMARK_DATA])
+    )
+    results = await service.search(title="Example")
+    assert len(results) == 1
+    assert "title=Example" in str(route.calls[0].request.url)
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_search_bookmarks_date_range(service: BookmarkService) -> None:
+    route = respx.get(f"{BASE_URL}/api/bookmarks").mock(
+        return_value=httpx.Response(200, json=[BOOKMARK_DATA])
+    )
+    results = await service.search(range_start="2026-01-01", range_end="2026-12-31")
+    assert len(results) == 1
+    url_str = str(route.calls[0].request.url)
+    assert "range_start=2026-01-01" in url_str
+    assert "range_end=2026-12-31" in url_str
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_search_bookmarks_is_archived(service: BookmarkService) -> None:
+    route = respx.get(f"{BASE_URL}/api/bookmarks").mock(
+        return_value=httpx.Response(200, json=[BOOKMARK_DATA])
+    )
+    results = await service.search(is_archived=True)
+    assert len(results) == 1
+    assert "is_archived=true" in str(route.calls[0].request.url)
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_search_bookmarks_read_status(service: BookmarkService) -> None:
+    route = respx.get(f"{BASE_URL}/api/bookmarks").mock(
+        return_value=httpx.Response(200, json=[BOOKMARK_DATA])
+    )
+    results = await service.search(read_status=["unread", "reading"])
+    assert len(results) == 1
+    url_str = str(route.calls[0].request.url)
+    assert "read_status=unread" in url_str
+    assert "read_status=reading" in url_str
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_search_bookmarks_collection(service: BookmarkService) -> None:
+    route = respx.get(f"{BASE_URL}/api/bookmarks").mock(
+        return_value=httpx.Response(200, json=[BOOKMARK_DATA])
+    )
+    results = await service.search(collection="col1")
+    assert len(results) == 1
+    assert "collection=col1" in str(route.calls[0].request.url)
 
 
 @respx.mock

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from readeck_cli.client.http import ReadeckClient
@@ -58,8 +59,62 @@ class BookmarkService:
     async def delete(self, bookmark_id: str) -> None:
         await self._client.delete(f"/api/bookmarks/{bookmark_id}")
 
-    async def search(self, query: str) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
-        params: dict[str, str | int] = {"search": query, "limit": 100}
+    async def search(
+        self,
+        search: str | None = None,
+        title: str | None = None,
+        author: str | None = None,
+        site: str | None = None,
+        type: builtins.list[str] | None = None,
+        labels: str | None = None,
+        is_loaded: bool | None = None,
+        has_errors: bool | None = None,
+        has_labels: bool | None = None,
+        is_archived: bool | None = None,
+        is_marked: bool | None = None,
+        range_start: str | None = None,
+        range_end: str | None = None,
+        read_status: builtins.list[str] | None = None,
+        id: str | None = None,
+        collection: str | None = None,
+        sort: builtins.list[str] | None = None,
+        limit: int = 100,
+    ) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
+        params: dict[str, Any] = {"limit": limit}
+        if search is not None:
+            params["search"] = search
+        if title is not None:
+            params["title"] = title
+        if author is not None:
+            params["author"] = author
+        if site is not None:
+            params["site"] = site
+        if type is not None:
+            params["type"] = type
+        if labels is not None:
+            params["labels"] = labels
+        if is_loaded is not None:
+            params["is_loaded"] = str(is_loaded).lower()
+        if has_errors is not None:
+            params["has_errors"] = str(has_errors).lower()
+        if has_labels is not None:
+            params["has_labels"] = str(has_labels).lower()
+        if is_archived is not None:
+            params["is_archived"] = str(is_archived).lower()
+        if is_marked is not None:
+            params["is_marked"] = str(is_marked).lower()
+        if range_start is not None:
+            params["range_start"] = range_start
+        if range_end is not None:
+            params["range_end"] = range_end
+        if read_status is not None:
+            params["read_status"] = read_status
+        if id is not None:
+            params["id"] = id
+        if collection is not None:
+            params["collection"] = collection
+        if sort is not None:
+            params["sort"] = sort
         response = await self._client.get("/api/bookmarks", params=params)
         return [Bookmark.model_validate(item) for item in response.json()]
 

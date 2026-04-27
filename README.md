@@ -55,9 +55,36 @@ readeck-cli bookmarks add <url>
 readeck-cli bookmarks update <id> --title "New title" --labels "work,python"
 readeck-cli bookmarks update <id> --archived
 readeck-cli bookmarks delete <id>
-readeck-cli bookmarks search <query>
-readeck-cli bookmarks export <id> --format epub   # or pdf
+readeck-cli bookmarks search --search <query>
+readeck-cli bookmarks search --title "python" --sort -created
+readeck-cli bookmarks search --range-start 2026-01-01 --range-end 2026-03-31
+readeck-cli bookmarks search --read-status unread --archived
+readeck-cli bookmarks search --labels "python,security" --type article
+readeck-cli bookmarks search --collection <id>
+readeck-cli bookmarks export <id> --format md     # or pdf
 ```
+
+`bookmarks search` filter options:
+
+| Option | Type | Description |
+|---|---|---|
+| `--search` / `-s` | string | Full-text search |
+| `--title` | string | Filter by title |
+| `--author` | string | Filter by author |
+| `--site` | string | Filter by site name or domain |
+| `--type` | repeatable | `article`, `photo`, `video` |
+| `--labels` | string | Labels, comma-separated |
+| `--range-start` / `--range-end` | ISO 8601 | Date range |
+| `--read-status` | repeatable | `unread`, `reading`, `read` |
+| `--archived` / `--no-archived` | flag | Archived status |
+| `--marked` / `--no-marked` | flag | Marked/favourite |
+| `--has-labels` / `--no-has-labels` | flag | Has labels or not |
+| `--loaded` / `--no-loaded` | flag | Loaded state |
+| `--errors` / `--no-errors` | flag | Error state |
+| `--collection` | string | Collection ID |
+| `--id` | string | Bookmark ID(s) |
+| `--sort` | repeatable | `created`, `-created`, `title`, `-title`, `domain`, `site`, `duration`, `published` |
+| `--limit` / `-l` | integer | Max results (default: 100) |
 
 ### Labels
 
