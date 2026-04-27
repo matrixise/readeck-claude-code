@@ -63,7 +63,7 @@ class BookmarkService:
         response = await self._client.get("/api/bookmarks", params=params)
         return [Bookmark.model_validate(item) for item in response.json()]
 
-    async def export(self, bookmark_id: str, fmt: str = "epub") -> bytes:
+    async def export(self, bookmark_id: str, fmt: str = "md") -> bytes:
         return await self._client.get_bytes(
             f"/api/bookmarks/{bookmark_id}/article.{fmt}"
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -239,14 +240,17 @@ def search_bookmarks(
 @app.command("export")
 def export_bookmark(
     bookmark_id: Annotated[str, typer.Argument()],
-    fmt: Annotated[str, typer.Option("--format", "-f", help="epub or pdf")] = "epub",
+    fmt: Annotated[str, typer.Option("--format", "-f", help="md or pdf")] = "md",
     dest: Annotated[
         Path | None, typer.Option("--output", "-o", help="Output file path")
     ] = None,
+    stdout: Annotated[
+        bool, typer.Option("--stdout", help="Write to stdout instead of a file")
+    ] = False,
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
 ) -> None:
-    """Export a bookmark as epub or pdf."""
+    """Export a bookmark as md or pdf."""
     client, service = _make_service(url, token)
 
     async def _run() -> bytes:
@@ -258,6 +262,10 @@ def export_bookmark(
     except ReadeckAPIError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
+
+    if stdout:
+        sys.stdout.buffer.write(content)
+        return
 
     out_path = dest or Path(f"{bookmark_id}.{fmt}")
     out_path.write_bytes(content)
