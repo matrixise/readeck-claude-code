@@ -152,6 +152,9 @@ def update_bookmark(
         bool | None, typer.Option("--archived/--no-archived")
     ] = None,
     is_marked: Annotated[bool | None, typer.Option("--marked/--no-marked")] = None,
+    is_read: Annotated[
+        bool | None, typer.Option("--read/--unread", help="Mark as read or unread")
+    ] = None,
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
 ) -> None:
@@ -165,6 +168,8 @@ def update_bookmark(
         updates["is_archived"] = is_archived
     if is_marked is not None:
         updates["is_marked"] = is_marked
+    if is_read is not None:
+        updates["read_progress"] = 100 if is_read else 0
     if not updates:
         print_error("No fields to update.")
         raise typer.Exit(1) from None
