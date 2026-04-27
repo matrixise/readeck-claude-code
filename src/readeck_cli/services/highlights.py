@@ -9,9 +9,7 @@ class HighlightService:
     def __init__(self, client: ReadeckClient) -> None:
         self._client = client
 
-    async def list(
-        self, bookmark_id: str | None = None
-    ) -> list[Highlight]:  # ty: ignore
+    async def list(self, bookmark_id: str | None = None) -> list[Highlight]:  # ty: ignore
         if bookmark_id:
             path = f"/api/bookmarks/{bookmark_id}/highlights"
         else:
