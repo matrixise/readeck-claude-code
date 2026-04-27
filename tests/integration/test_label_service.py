@@ -22,56 +22,90 @@ def service(client: ReadeckClient) -> LabelService:
 @respx.mock
 @pytest.mark.asyncio
 async def test_list_labels(service: LabelService) -> None:
-    respx.get(f"{BASE_URL}/api/labels").mock(
+    respx.get(f"{BASE_URL}/api/bookmarks/labels").mock(
         return_value=httpx.Response(
             200,
             json=[
-                {"id": "l1", "label": "python", "count": 5},
-                {"id": "l2", "label": "go", "count": 2},
+                {
+                    "name": "python",
+                    "count": 5,
+                    "href": "/api/bookmarks/labels?name=python",
+                    "href_bookmarks": "/api/bookmarks?labels=%22python%22",
+                },
+                {
+                    "name": "go",
+                    "count": 2,
+                    "href": "/api/bookmarks/labels?name=go",
+                    "href_bookmarks": "/api/bookmarks?labels=%22go%22",
+                },
             ],
         )
     )
     labels = await service.list()
     assert len(labels) == 2
-    assert labels[0].label == "python"
+    assert labels[0].name == "python"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_get_label(service: LabelService) -> None:
-    respx.get(f"{BASE_URL}/api/labels/l1").mock(
+    respx.get(f"{BASE_URL}/api/bookmarks/labels").mock(
         return_value=httpx.Response(
-            200, json={"id": "l1", "label": "python", "count": 5}
+            200,
+            json=[
+                {
+                    "name": "python",
+                    "count": 5,
+                    "href": "/api/bookmarks/labels?name=python",
+                    "href_bookmarks": "/api/bookmarks?labels=%22python%22",
+                }
+            ],
         )
     )
-    label = await service.get("l1")
-    assert label.id == "l1"
+    label = await service.get("python")
+    assert label.name == "python"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_create_label(service: LabelService) -> None:
-    respx.post(f"{BASE_URL}/api/labels").mock(
-        return_value=httpx.Response(201, json={"id": "l3", "label": "rust", "count": 0})
+    respx.post(f"{BASE_URL}/api/bookmarks/labels").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "name": "rust",
+                "count": 0,
+                "href": "/api/bookmarks/labels?name=rust",
+                "href_bookmarks": "/api/bookmarks?labels=%22rust%22",
+            },
+        )
     )
     label = await service.create("rust")
-    assert label.label == "rust"
+    assert label.name == "rust"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_update_label(service: LabelService) -> None:
-    respx.patch(f"{BASE_URL}/api/labels/l1").mock(
+    respx.patch(f"{BASE_URL}/api/bookmarks/labels").mock(
         return_value=httpx.Response(
-            200, json={"id": "l1", "label": "python3", "count": 5}
+            200,
+            json={
+                "name": "python3",
+                "count": 5,
+                "href": "/api/bookmarks/labels?name=python3",
+                "href_bookmarks": "/api/bookmarks?labels=%22python3%22",
+            },
         )
     )
-    label = await service.update("l1", name="python3")
-    assert label.label == "python3"
+    label = await service.update("python", new_name="python3")
+    assert label.name == "python3"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_delete_label(service: LabelService) -> None:
-    respx.delete(f"{BASE_URL}/api/labels/l1").mock(return_value=httpx.Response(204))
-    await service.delete("l1")
+    respx.delete(f"{BASE_URL}/api/bookmarks/labels").mock(
+        return_value=httpx.Response(204)
+    )
+    await service.delete("python")
