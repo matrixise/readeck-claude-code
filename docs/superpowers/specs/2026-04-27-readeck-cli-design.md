@@ -220,7 +220,7 @@ dev = [
 - `uv` cache for fast installs
 
 ### Git worktrees
-- Stored in `.cloud/` (gitignored)
+- Stored in `.claude/worktrees/` (gitignored)
 
 ---
 
