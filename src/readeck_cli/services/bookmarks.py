@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any
 
 from readeck_cli.client.http import ReadeckClient
@@ -11,7 +10,7 @@ class BookmarkService:
     def __init__(self, client: ReadeckClient) -> None:
         self._client = client
 
-    async def list(
+    async def list_bookmarks(
         self,
         page: int = 1,
         limit: int = 20,
@@ -25,7 +24,7 @@ class BookmarkService:
         total = int(response.headers.get("total-count", 0))
         return [Bookmark.model_validate(item) for item in response.json()], total
 
-    async def _fetch_all(self) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
+    async def _fetch_all(self) -> list[Bookmark]:  # ty: ignore
         all_items: list[Bookmark] = []
         offset = 0
         limit = 100
@@ -65,7 +64,7 @@ class BookmarkService:
         title: str | None = None,
         author: str | None = None,
         site: str | None = None,
-        type: Sequence[str] | None = None,
+        type: list[str] | None = None,
         labels: str | None = None,
         is_loaded: bool | None = None,
         has_errors: bool | None = None,
@@ -74,12 +73,12 @@ class BookmarkService:
         is_marked: bool | None = None,
         range_start: str | None = None,
         range_end: str | None = None,
-        read_status: Sequence[str] | None = None,
+        read_status: list[str] | None = None,
         id: str | None = None,
         collection: str | None = None,
-        sort: Sequence[str] | None = None,
+        sort: list[str] | None = None,
         limit: int = 100,
-    ) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
+    ) -> list[Bookmark]:  # ty: ignore
         params: dict[str, Any] = {"limit": limit}
         if search is not None:
             params["search"] = search

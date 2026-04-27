@@ -49,7 +49,7 @@ async def test_list_bookmarks(service: BookmarkService) -> None:
             200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
-    bookmarks, total = await service.list()
+    bookmarks, total = await service.list_bookmarks()
     assert len(bookmarks) == 1
     assert total == 1
     assert bookmarks[0].url == "https://example.com"
@@ -176,5 +176,5 @@ async def test_fetch_all_bookmarks(service: BookmarkService) -> None:
             200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
-    bookmarks, _ = await service.list(fetch_all=True)
+    bookmarks, _ = await service.list_bookmarks(fetch_all=True)
     assert len(bookmarks) == 1

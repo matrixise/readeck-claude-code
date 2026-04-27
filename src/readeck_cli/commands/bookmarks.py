@@ -61,7 +61,9 @@ def list_bookmarks(
 
     async def _run() -> tuple[list[Bookmark], int]:
         async with client:
-            return await service.list(page=page, limit=limit, fetch_all=all_pages)
+            return await service.list_bookmarks(
+                page=page, limit=limit, fetch_all=all_pages
+            )
 
     try:
         bookmarks, total = asyncio.run(_run())
