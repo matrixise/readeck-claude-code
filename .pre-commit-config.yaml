@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.1
+    hooks:
+      - id: mypy
+        args: [src/]
+        additional_dependencies:
+          - pydantic
+          - types-toml
+          - httpx
+          - typer
+          - rich
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty type check
+        entry: uv run ty check src/
+        language: system
+        pass_filenames: false
+        types: [python]
