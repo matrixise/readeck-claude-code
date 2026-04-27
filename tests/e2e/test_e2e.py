@@ -1,5 +1,6 @@
 # tests/e2e/test_e2e.py
 import pytest
+
 from readeck_cli.client.http import ReadeckClient
 from readeck_cli.services.bookmarks import BookmarkService
 from readeck_cli.services.labels import LabelService

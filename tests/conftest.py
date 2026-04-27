@@ -2,6 +2,7 @@
 import os
 
 import pytest
+
 from readeck_cli.client.http import ReadeckClient
 from readeck_cli.config import Config
 

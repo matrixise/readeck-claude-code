@@ -1,6 +1,7 @@
 # tests/unit/test_main.py
-from readeck_cli.main import app
 from typer.testing import CliRunner
+
+from readeck_cli.main import app
 
 runner = CliRunner()
 

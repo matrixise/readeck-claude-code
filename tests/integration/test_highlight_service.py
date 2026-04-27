@@ -2,6 +2,7 @@
 import httpx
 import pytest
 import respx
+
 from readeck_cli.client.http import ReadeckClient
 from readeck_cli.services.highlights import HighlightService
 

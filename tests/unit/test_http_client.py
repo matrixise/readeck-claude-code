@@ -2,6 +2,7 @@
 import httpx
 import pytest
 import respx
+
 from readeck_cli.client.http import ReadeckAPIError, ReadeckClient
 
 BASE_URL = "https://readeck.example.com"

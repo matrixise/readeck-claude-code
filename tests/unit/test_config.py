@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import tomli_w
+
 from readeck_cli.config import load_config, remove_token, save_config
 
 

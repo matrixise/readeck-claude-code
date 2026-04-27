@@ -2,8 +2,9 @@
 import json
 from io import StringIO
 
-from readeck_cli.output import OutputFormat, render_json, render_table
 from rich.console import Console
+
+from readeck_cli.output import OutputFormat, render_json, render_table
 
 
 def test_render_json_returns_valid_json() -> None:
