@@ -19,7 +19,7 @@ async def test_profile_returns_username(e2e_client: ReadeckClient) -> None:
 @pytest.mark.asyncio
 async def test_list_bookmarks_returns_list(e2e_client: ReadeckClient) -> None:
     service = BookmarkService(e2e_client)
-    bookmarks, total = await service.list(limit=5)
+    bookmarks, total = await service.list_bookmarks(limit=5)
     assert isinstance(bookmarks, list)
     assert total >= 0
 
@@ -28,5 +28,5 @@ async def test_list_bookmarks_returns_list(e2e_client: ReadeckClient) -> None:
 @pytest.mark.asyncio
 async def test_list_labels_returns_list(e2e_client: ReadeckClient) -> None:
     service = LabelService(e2e_client)
-    labels = await service.list()
+    labels = await service.list_bookmarks()
     assert isinstance(labels, list)

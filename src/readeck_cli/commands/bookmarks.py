@@ -61,7 +61,9 @@ def list_bookmarks(
 
     async def _run() -> tuple[list[Bookmark], int]:
         async with client:
-            return await service.list(page=page, limit=limit, fetch_all=all_pages)
+            return await service.list_bookmarks(
+                page=page, limit=limit, fetch_all=all_pages
+            )
 
     try:
         bookmarks, total = asyncio.run(_run())
@@ -150,6 +152,9 @@ def update_bookmark(
         bool | None, typer.Option("--archived/--no-archived")
     ] = None,
     is_marked: Annotated[bool | None, typer.Option("--marked/--no-marked")] = None,
+    is_read: Annotated[
+        bool | None, typer.Option("--read/--unread", help="Mark as read or unread")
+    ] = None,
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
 ) -> None:
@@ -163,6 +168,8 @@ def update_bookmark(
         updates["is_archived"] = is_archived
     if is_marked is not None:
         updates["is_marked"] = is_marked
+    if is_read is not None:
+        updates["read_progress"] = 100 if is_read else 0
     if not updates:
         print_error("No fields to update.")
         raise typer.Exit(1) from None
@@ -205,21 +212,144 @@ def delete_bookmark(
         raise typer.Exit(1) from None
 
 
+_SORT_VALUES = [
+    "created",
+    "-created",
+    "domain",
+    "-domain",
+    "duration",
+    "-duration",
+    "published",
+    "-published",
+    "site",
+    "-site",
+    "title",
+    "-title",
+]
+_TYPE_VALUES = ["article", "photo", "video"]
+_READ_STATUS_VALUES = ["unread", "reading", "read"]
+
+
 @app.command("search")
 def search_bookmarks(
-    query: Annotated[str, typer.Argument()],
+    search: Annotated[
+        str | None, typer.Option("--search", "-s", help="Full-text search string")
+    ] = None,
+    title: Annotated[
+        str | None, typer.Option("--title", help="Filter by bookmark title")
+    ] = None,
+    author: Annotated[
+        str | None, typer.Option("--author", help="Filter by author name")
+    ] = None,
+    site: Annotated[
+        str | None, typer.Option("--site", help="Filter by site name or domain")
+    ] = None,
+    type: Annotated[
+        list[str] | None,
+        typer.Option("--type", help="Filter by type (article, photo, video)"),
+    ] = None,
+    labels: Annotated[
+        str | None, typer.Option("--labels", help="Filter by labels (comma-separated)")
+    ] = None,
+    is_loaded: Annotated[
+        bool | None, typer.Option("--loaded/--no-loaded", help="Filter by loaded state")
+    ] = None,
+    has_errors: Annotated[
+        bool | None,
+        typer.Option("--errors/--no-errors", help="Filter by error state"),
+    ] = None,
+    has_labels: Annotated[
+        bool | None,
+        typer.Option("--has-labels/--no-has-labels", help="Filter by label presence"),
+    ] = None,
+    is_archived: Annotated[
+        bool | None,
+        typer.Option("--archived/--no-archived", help="Filter by archived status"),
+    ] = None,
+    is_marked: Annotated[
+        bool | None,
+        typer.Option("--marked/--no-marked", help="Filter by marked/favourite status"),
+    ] = None,
+    range_start: Annotated[
+        str | None,
+        typer.Option("--range-start", help="Date range start (ISO 8601)"),
+    ] = None,
+    range_end: Annotated[
+        str | None, typer.Option("--range-end", help="Date range end (ISO 8601)")
+    ] = None,
+    read_status: Annotated[
+        list[str] | None,
+        typer.Option("--read-status", help="Read status: unread, reading, read"),
+    ] = None,
+    bookmark_id: Annotated[
+        str | None, typer.Option("--id", help="Filter by bookmark ID(s)")
+    ] = None,
+    collection: Annotated[
+        str | None, typer.Option("--collection", help="Filter by collection ID")
+    ] = None,
+    sort: Annotated[
+        list[str] | None,
+        typer.Option("--sort", help="Sort order, repeatable (e.g. -created, title)"),
+    ] = None,
+    limit: Annotated[
+        int, typer.Option("--limit", "-l", help="Max results to return")
+    ] = 100,
     url: Annotated[str | None, typer.Option(envvar="READECK_URL")] = None,
     token: Annotated[str | None, typer.Option(envvar="READECK_TOKEN")] = None,
     output: Annotated[
         OutputFormat, typer.Option("--output", "-o")
     ] = OutputFormat.TABLE,
 ) -> None:
-    """Full-text search bookmarks."""
+    """Search and filter bookmarks."""
+    _bool_flags = [is_loaded, has_errors, has_labels, is_archived, is_marked]
+    _has_filter = any(
+        [
+            search,
+            title,
+            author,
+            site,
+            type,
+            labels,
+            range_start,
+            range_end,
+            read_status,
+            bookmark_id,
+            collection,
+            sort,
+            any(f is not None for f in _bool_flags),
+        ]
+    )
+    if not _has_filter:
+        print_error(
+            "Provide at least one filter"
+            " (e.g. --search, --title, --labels, --range-start, --archived)."
+        )
+        raise typer.Exit(1) from None
+
     client, service = _make_service(url, token)
 
     async def _run() -> list[Bookmark]:
         async with client:
-            return await service.search(query)
+            return await service.search(
+                search=search,
+                title=title,
+                author=author,
+                site=site,
+                type=type,
+                labels=labels,
+                is_loaded=is_loaded,
+                has_errors=has_errors,
+                has_labels=has_labels,
+                is_archived=is_archived,
+                is_marked=is_marked,
+                range_start=range_start,
+                range_end=range_end,
+                read_status=read_status,
+                id=bookmark_id,
+                collection=collection,
+                sort=sort,
+                limit=limit,
+            )
 
     try:
         bookmarks = asyncio.run(_run())
@@ -230,10 +360,25 @@ def search_bookmarks(
     if output == OutputFormat.JSON:
         render_json([bm.model_dump(mode="json") for bm in bookmarks])
     else:
+        filters = ", ".join(
+            filter(
+                None,
+                [
+                    f"search={search!r}" if search else None,
+                    f"title={title!r}" if title else None,
+                    f"author={author!r}" if author else None,
+                    f"site={site!r}" if site else None,
+                    f"range={range_start}..{range_end}"
+                    if range_start or range_end
+                    else None,
+                ],
+            )
+        )
+        suffix = f" — {filters}" if filters else ""
         render_table(
             headers=["ID", "Title", "URL", "Archived", "Read (min)", "Labels"],
             rows=[_bookmark_row(bm) for bm in bookmarks],
-            title=f"Search results for '{query}' ({len(bookmarks)})",
+            title=f"Search results ({len(bookmarks)}){suffix}",
         )
 
 

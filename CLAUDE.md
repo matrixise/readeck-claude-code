@@ -46,7 +46,7 @@ Typer command → Service → ReadeckClient (HTTPX async) → Pydantic model →
 
 **`client/http.py`** — `ReadeckClient` wraps HTTPX async, injects Bearer token, maps HTTP errors (401/403/404/422/5xx) to `ReadeckAPIError`. Use as async context manager or call `aclose()` explicitly. `create_token()` is a classmethod for the login flow (no auth required).
 
-**`services/`** — One class per resource (`BookmarkService`, `LabelService`, etc.). All methods are `async`. Services receive a `ReadeckClient` instance and return typed Pydantic models. Pagination in `BookmarkService.list()` uses the `X-Total-Count` response header; `--all` triggers `_fetch_all()` which pages at 100 items.
+**`services/`** — One class per resource (`BookmarkService`, `LabelService`, etc.). All methods are `async`. Services receive a `ReadeckClient` instance and return typed Pydantic models. Pagination in `BookmarkService.list()` uses the `X-Total-Count` response header; `--all` triggers `_fetch_all()` which pages at 100 items. `BookmarkService.search()` accepts all `GET /api/bookmarks` query parameters (search, title, author, site, type, labels, range_start, range_end, read_status, is_archived, is_marked, has_labels, has_errors, is_loaded, id, collection, sort, limit) and passes them through as query params.
 
 **`commands/`** — Thin Typer wrappers. Each command calls `_make_service(url, token)` to load config, instantiates the client, calls `asyncio.run()` on the service method, then closes the client in a `finally` block. Every command accepts `--url` / `--token` flags (also read from `READECK_URL` / `READECK_TOKEN` env vars) and most accept `--output [table|json]`.
 
