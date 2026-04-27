@@ -59,10 +59,8 @@ def list_bookmarks(
     client, service = _make_service(url, token)
 
     async def _run() -> tuple[list[Bookmark], int]:
-        try:
+        async with client:
             return await service.list(page=page, limit=limit, fetch_all=all_pages)
-        finally:
-            await client.aclose()
 
     try:
         bookmarks, total = asyncio.run(_run())
@@ -93,10 +91,8 @@ def get_bookmark(
     client, service = _make_service(url, token)
 
     async def _run() -> Bookmark:
-        try:
+        async with client:
             return await service.get(bookmark_id)
-        finally:
-            await client.aclose()
 
     try:
         bm = asyncio.run(_run())
@@ -131,10 +127,8 @@ def add_bookmark(
     client, service = _make_service(url, token)
 
     async def _run() -> str:
-        try:
+        async with client:
             return await service.create(bookmark_url)
-        finally:
-            await client.aclose()
 
     try:
         bookmark_id = asyncio.run(_run())
@@ -175,10 +169,8 @@ def update_bookmark(
     client, service = _make_service(url, token)
 
     async def _run() -> BookmarkUpdated:
-        try:
+        async with client:
             return await service.update(bookmark_id, **updates)
-        finally:
-            await client.aclose()
 
     try:
         bm = asyncio.run(_run())
@@ -201,10 +193,8 @@ def delete_bookmark(
     client, service = _make_service(url, token)
 
     async def _run() -> None:
-        try:
+        async with client:
             await service.delete(bookmark_id)
-        finally:
-            await client.aclose()
 
     try:
         asyncio.run(_run())
@@ -227,10 +217,8 @@ def search_bookmarks(
     client, service = _make_service(url, token)
 
     async def _run() -> list[Bookmark]:
-        try:
+        async with client:
             return await service.search(query)
-        finally:
-            await client.aclose()
 
     try:
         bookmarks = asyncio.run(_run())
@@ -262,10 +250,8 @@ def export_bookmark(
     client, service = _make_service(url, token)
 
     async def _run() -> bytes:
-        try:
+        async with client:
             return await service.export(bookmark_id, fmt=fmt)
-        finally:
-            await client.aclose()
 
     try:
         content = asyncio.run(_run())

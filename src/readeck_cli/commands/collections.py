@@ -8,6 +8,7 @@ import typer
 
 from readeck_cli.client.http import ReadeckAPIError, ReadeckClient
 from readeck_cli.config import load_config
+from readeck_cli.models.collection import Collection
 from readeck_cli.output import (
     OutputFormat,
     print_error,
@@ -27,7 +28,7 @@ def _make_service(
         config = load_config(url=url, token=token)
     except ValueError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
     client = ReadeckClient(config.url, config.token)
     return client, CollectionService(client)
 
@@ -42,13 +43,16 @@ def list_collections(
 ) -> None:
     """List all collections."""
     client, service = _make_service(url, token)
+
+    async def _run() -> list[Collection]:
+        async with client:
+            return await service.list()
+
     try:
-        collections = asyncio.run(service.list())
+        collections = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None
 
     if output == OutputFormat.JSON:
         render_json([col.model_dump(mode="json") for col in collections])
@@ -71,13 +75,16 @@ def get_collection(
 ) -> None:
     """Get a collection by ID."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Collection:
+        async with client:
+            return await service.get(collection_id)
+
     try:
-        col = asyncio.run(service.get(collection_id))
+        col = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None
 
     if output == OutputFormat.JSON:
         render_json(col.model_dump(mode="json"))
@@ -96,14 +103,17 @@ def create_collection(
 ) -> None:
     """Create a new collection."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Collection:
+        async with client:
+            return await service.create(title)
+
     try:
-        col = asyncio.run(service.create(title))
+        col = asyncio.run(_run())
         print_success(f"Collection '{col.title}' created (id: {col.id})")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None
 
 
 @app.command("update")
@@ -115,14 +125,17 @@ def update_collection(
 ) -> None:
     """Rename a collection."""
     client, service = _make_service(url, token)
+
+    async def _run() -> Collection:
+        async with client:
+            return await service.update(collection_id, title=title)
+
     try:
-        col = asyncio.run(service.update(collection_id, title=title))
+        col = asyncio.run(_run())
         print_success(f"Collection updated to '{col.title}'")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None
 
 
 @app.command("delete")
@@ -136,11 +149,14 @@ def delete_collection(
     if not confirm:
         typer.confirm(f"Delete collection {collection_id}?", abort=True)
     client, service = _make_service(url, token)
+
+    async def _run() -> None:
+        async with client:
+            await service.delete(collection_id)
+
     try:
-        asyncio.run(service.delete(collection_id))
+        asyncio.run(_run())
         print_success(f"Collection {collection_id} deleted.")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None

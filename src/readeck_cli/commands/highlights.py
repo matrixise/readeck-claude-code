@@ -8,6 +8,7 @@ import typer
 
 from readeck_cli.client.http import ReadeckAPIError, ReadeckClient
 from readeck_cli.config import load_config
+from readeck_cli.models.highlight import Highlight
 from readeck_cli.output import (
     OutputFormat,
     print_error,
@@ -27,7 +28,7 @@ def _make_service(
         config = load_config(url=url, token=token)
     except ValueError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
     client = ReadeckClient(config.url, config.token)
     return client, HighlightService(client)
 
@@ -45,13 +46,16 @@ def list_highlights(
 ) -> None:
     """List highlights (optionally filtered by bookmark)."""
     client, service = _make_service(url, token)
+
+    async def _run() -> list[Highlight]:
+        async with client:
+            return await service.list(bookmark_id=bookmark)
+
     try:
-        highlights = asyncio.run(service.list(bookmark_id=bookmark))
+        highlights = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None
 
     if output == OutputFormat.JSON:
         render_json([h.model_dump(mode="json") for h in highlights])
@@ -82,11 +86,14 @@ def delete_highlight(
     if not confirm:
         typer.confirm(f"Delete highlight {highlight_id}?", abort=True)
     client, service = _make_service(url, token)
+
+    async def _run() -> None:
+        async with client:
+            await service.delete(highlight_id)
+
     try:
-        asyncio.run(service.delete(highlight_id))
+        asyncio.run(_run())
         print_success(f"Highlight {highlight_id} deleted.")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
-    finally:
-        asyncio.run(client.aclose())
+        raise typer.Exit(1) from None

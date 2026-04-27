@@ -28,7 +28,7 @@ def _make_service(
         config = load_config(url=url, token=token)
     except ValueError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
     client = ReadeckClient(config.url, config.token)
     return client, LabelService(client)
 
@@ -45,16 +45,14 @@ def list_labels(
     client, service = _make_service(url, token)
 
     async def _run() -> list[Label]:
-        try:
+        async with client:
             return await service.list()
-        finally:
-            await client.aclose()
 
     try:
         labels = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
 
     if output == OutputFormat.JSON:
         render_json([{"name": lbl.name, "count": lbl.count} for lbl in labels])
@@ -79,16 +77,14 @@ def get_label(
     client, service = _make_service(url, token)
 
     async def _run() -> Label:
-        try:
+        async with client:
             return await service.get(name)
-        finally:
-            await client.aclose()
 
     try:
         label = asyncio.run(_run())
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
 
     if output == OutputFormat.JSON:
         render_json({"name": label.name, "count": label.count})
@@ -109,17 +105,15 @@ def create_label(
     client, service = _make_service(url, token)
 
     async def _run() -> Label:
-        try:
+        async with client:
             return await service.create(name)
-        finally:
-            await client.aclose()
 
     try:
         label = asyncio.run(_run())
         print_success(f"Label '{label.name}' created")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
 
 
 @app.command("update")
@@ -133,17 +127,15 @@ def update_label(
     client, service = _make_service(url, token)
 
     async def _run() -> Label:
-        try:
+        async with client:
             return await service.update(name, new_name=new_name)
-        finally:
-            await client.aclose()
 
     try:
         label = asyncio.run(_run())
         print_success(f"Label updated to '{label.name}'")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
 
 
 @app.command("delete")
@@ -161,14 +153,12 @@ def delete_label(
     client, service = _make_service(url, token)
 
     async def _run() -> None:
-        try:
+        async with client:
             await service.delete(name)
-        finally:
-            await client.aclose()
 
     try:
         asyncio.run(_run())
         print_success(f"Label '{name}' deleted.")
     except ReadeckAPIError as e:
         print_error(str(e))
-        raise typer.Exit(1) from e
+        raise typer.Exit(1) from None
