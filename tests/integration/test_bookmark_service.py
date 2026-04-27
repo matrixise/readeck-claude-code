@@ -13,11 +13,21 @@ BOOKMARK_DATA = {
     "href": "/api/bookmarks/b1",
     "url": "https://example.com",
     "title": "Example",
+    "loaded": True,
     "labels": [],
     "is_archived": False,
     "is_marked": False,
+    "is_deleted": False,
+    "read_progress": 0,
     "created": "2026-01-01T00:00:00Z",
     "updated": "2026-01-01T00:00:00Z",
+}
+
+BOOKMARK_UPDATED_DATA = {
+    "id": "b1",
+    "href": "/api/bookmarks/b1",
+    "title": "Updated Title",
+    "updated": "2026-01-02T00:00:00Z",
 }
 
 
@@ -36,7 +46,7 @@ def service(client: ReadeckClient) -> BookmarkService:
 async def test_list_bookmarks(service: BookmarkService) -> None:
     respx.get(f"{BASE_URL}/api/bookmarks").mock(
         return_value=httpx.Response(
-            200, json=[BOOKMARK_DATA], headers={"X-Total-Count": "1"}
+            200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
     bookmarks, total = await service.list()
@@ -59,21 +69,25 @@ async def test_get_bookmark(service: BookmarkService) -> None:
 @pytest.mark.asyncio
 async def test_create_bookmark(service: BookmarkService) -> None:
     respx.post(f"{BASE_URL}/api/bookmarks").mock(
-        return_value=httpx.Response(201, json=BOOKMARK_DATA)
+        return_value=httpx.Response(
+            202,
+            json={"status": 202, "message": "Link submited"},
+            headers={"Bookmark-ID": "b1"},
+        )
     )
-    bm = await service.create("https://example.com")
-    assert bm.url == "https://example.com"
+    bookmark_id = await service.create("https://example.com")
+    assert bookmark_id == "b1"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_update_bookmark(service: BookmarkService) -> None:
-    updated = {**BOOKMARK_DATA, "title": "Updated Title"}
     respx.patch(f"{BASE_URL}/api/bookmarks/b1").mock(
-        return_value=httpx.Response(200, json=updated)
+        return_value=httpx.Response(200, json=BOOKMARK_UPDATED_DATA)
     )
     bm = await service.update("b1", title="Updated Title")
     assert bm.title == "Updated Title"
+    assert bm.id == "b1"
 
 
 @respx.mock
@@ -88,7 +102,7 @@ async def test_delete_bookmark(service: BookmarkService) -> None:
 async def test_search_bookmarks(service: BookmarkService) -> None:
     respx.get(f"{BASE_URL}/api/bookmarks").mock(
         return_value=httpx.Response(
-            200, json=[BOOKMARK_DATA], headers={"X-Total-Count": "1"}
+            200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
     results = await service.search("example")
@@ -100,7 +114,7 @@ async def test_search_bookmarks(service: BookmarkService) -> None:
 async def test_fetch_all_bookmarks(service: BookmarkService) -> None:
     respx.get(f"{BASE_URL}/api/bookmarks").mock(
         return_value=httpx.Response(
-            200, json=[BOOKMARK_DATA], headers={"X-Total-Count": "1"}
+            200, json=[BOOKMARK_DATA], headers={"Total-Count": "1"}
         )
     )
     bookmarks, _ = await service.list(fetch_all=True)
