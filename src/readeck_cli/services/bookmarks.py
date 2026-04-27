@@ -16,7 +16,7 @@ class BookmarkService:
         page: int = 1,
         limit: int = 20,
         fetch_all: bool = False,
-    ) -> tuple[list[Bookmark], int]:  # ty: ignore[invalid-type-form]
+    ) -> tuple[list[Bookmark], int]:  # ty: ignore
         if fetch_all:
             items = await self._fetch_all()
             return items, len(items)
@@ -25,7 +25,7 @@ class BookmarkService:
         total = int(response.headers.get("X-Total-Count", 0))
         return [Bookmark.model_validate(item) for item in response.json()], total
 
-    async def _fetch_all(self) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
+    async def _fetch_all(self) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
         all_items: list[Bookmark] = []
         page = 1
         while True:
@@ -58,7 +58,7 @@ class BookmarkService:
     async def delete(self, bookmark_id: str) -> None:
         await self._client.delete(f"/api/bookmarks/{bookmark_id}")
 
-    async def search(self, query: str) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore[invalid-type-form]
+    async def search(self, query: str) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
         params: dict[str, str | int] = {"search": query, "limit": 100}
         response = await self._client.get("/api/bookmarks", params=params)
         return [Bookmark.model_validate(item) for item in response.json()]

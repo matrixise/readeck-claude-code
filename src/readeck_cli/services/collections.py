@@ -9,7 +9,7 @@ class CollectionService:
     def __init__(self, client: ReadeckClient) -> None:
         self._client = client
 
-    async def list(self) -> list[Collection]:  # ty: ignore[invalid-type-form]
+    async def list(self) -> list[Collection]:  # ty: ignore
         response = await self._client.get("/api/collections")
         return [Collection.model_validate(item) for item in response.json()]
 

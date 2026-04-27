@@ -9,7 +9,7 @@ class LabelService:
     def __init__(self, client: ReadeckClient) -> None:
         self._client = client
 
-    async def list(self) -> list[Label]:  # ty: ignore[invalid-type-form]
+    async def list(self) -> list[Label]:  # ty: ignore
         response = await self._client.get("/api/labels")
         return [Label.model_validate(item) for item in response.json()]
 
