@@ -60,9 +60,9 @@ def test_bookmark_parses_full() -> None:
 
 
 def test_label_parses() -> None:
-    data = {"id": "l1", "label": "python", "count": 3}
+    data = {"name": "python", "count": 3}
     label = Label.model_validate(data)
-    assert label.label == "python"
+    assert label.name == "python"
     assert label.count == 3
 
 
