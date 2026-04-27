@@ -48,10 +48,8 @@ def list_highlights(
     client, service = _make_service(url, token)
 
     async def _run() -> list[Highlight]:
-        try:
+        async with client:
             return await service.list(bookmark_id=bookmark)
-        finally:
-            await client.aclose()
 
     try:
         highlights = asyncio.run(_run())
@@ -90,10 +88,8 @@ def delete_highlight(
     client, service = _make_service(url, token)
 
     async def _run() -> None:
-        try:
+        async with client:
             await service.delete(highlight_id)
-        finally:
-            await client.aclose()
 
     try:
         asyncio.run(_run())

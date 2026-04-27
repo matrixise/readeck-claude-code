@@ -45,10 +45,8 @@ def list_collections(
     client, service = _make_service(url, token)
 
     async def _run() -> list[Collection]:
-        try:
+        async with client:
             return await service.list()
-        finally:
-            await client.aclose()
 
     try:
         collections = asyncio.run(_run())
@@ -79,10 +77,8 @@ def get_collection(
     client, service = _make_service(url, token)
 
     async def _run() -> Collection:
-        try:
+        async with client:
             return await service.get(collection_id)
-        finally:
-            await client.aclose()
 
     try:
         col = asyncio.run(_run())
@@ -109,10 +105,8 @@ def create_collection(
     client, service = _make_service(url, token)
 
     async def _run() -> Collection:
-        try:
+        async with client:
             return await service.create(title)
-        finally:
-            await client.aclose()
 
     try:
         col = asyncio.run(_run())
@@ -133,10 +127,8 @@ def update_collection(
     client, service = _make_service(url, token)
 
     async def _run() -> Collection:
-        try:
+        async with client:
             return await service.update(collection_id, title=title)
-        finally:
-            await client.aclose()
 
     try:
         col = asyncio.run(_run())
@@ -159,10 +151,8 @@ def delete_collection(
     client, service = _make_service(url, token)
 
     async def _run() -> None:
-        try:
+        async with client:
             await service.delete(collection_id)
-        finally:
-            await client.aclose()
 
     try:
         asyncio.run(_run())
