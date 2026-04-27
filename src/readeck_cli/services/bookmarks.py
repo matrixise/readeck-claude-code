@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import builtins
+from collections.abc import Sequence
 from typing import Any
 
 from readeck_cli.client.http import ReadeckClient
@@ -65,7 +65,7 @@ class BookmarkService:
         title: str | None = None,
         author: str | None = None,
         site: str | None = None,
-        type: builtins.list[str] | None = None,
+        type: Sequence[str] | None = None,
         labels: str | None = None,
         is_loaded: bool | None = None,
         has_errors: bool | None = None,
@@ -74,10 +74,10 @@ class BookmarkService:
         is_marked: bool | None = None,
         range_start: str | None = None,
         range_end: str | None = None,
-        read_status: builtins.list[str] | None = None,
+        read_status: Sequence[str] | None = None,
         id: str | None = None,
         collection: str | None = None,
-        sort: builtins.list[str] | None = None,
+        sort: Sequence[str] | None = None,
         limit: int = 100,
     ) -> list[Bookmark]:  # type: ignore[valid-type]  # ty: ignore
         params: dict[str, Any] = {"limit": limit}
