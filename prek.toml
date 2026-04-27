@@ -28,5 +28,5 @@ hooks = [
 repo = "local"
 hooks = [
     { id = "ty", name = "ty type check", entry = "uv run ty check src/", language = "system", pass_filenames = false, types = ["python"] },
-    { id = "pyupgrade", name = "pyupgrade", entry = "bash -c 'find src tests -name \"*.py\" | xargs uv run pyupgrade --py313-plus'", language = "system", pass_filenames = false },
+    { id = "pyupgrade", name = "pyupgrade", entry = "uv run pyupgrade --py313-plus", language = "system", types = ["python"] },
 ]
